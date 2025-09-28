@@ -1,0 +1,4 @@
+publishDir = "docs"
+baseURL = "https://github.com/jmj4/blog/"
+languageCode = "ko-kr"
+title = "Jimmy’s Notebook"
