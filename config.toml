@@ -1,4 +1,6 @@
 publishDir = "docs"
-baseURL = "https://github.com/jmj4/blog/"
+baseURL = "https://jmj4.github.io/blog/"
 languageCode = "ko-kr"
 title = "Jimmy’s Notebook"
+relativeURLs = true
+canonifyURLs = true
