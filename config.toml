@@ -1,6 +1,0 @@
-publishDir = "docs"
-baseURL = "https://jmj4.github.io/blog/"
-languageCode = "ko-kr"
-title = "Jimmy’s Notebook"
-relativeURLs = true
-canonifyURLs = true
