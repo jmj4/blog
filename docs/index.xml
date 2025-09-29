@@ -2,10 +2,10 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Jimmy&#39;s Notebook</title>
-    <link>https://jmj4.github.io/blog/</link>
+    <link>http://localhost:1313/blog/</link>
     <description>Recent content on Jimmy&#39;s Notebook</description>
     <generator>Hugo</generator>
     <language>ko</language>
-    <atom:link href="https://jmj4.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/blog/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>
