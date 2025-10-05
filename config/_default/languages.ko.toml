@@ -7,7 +7,7 @@ title = "Jimmy's Notebook"
 # copyright = "Copy, _right?_ :thinking_face:"
 
 [params]
-  dateFormat = "2006 January 2"
+  dateFormat = "2006년 1월 2일"
 
   # mainSections = ["section1", "section2"]
   # description = "My awesome website"
