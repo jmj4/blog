@@ -1,7 +1,565 @@
-<!doctype html><html lang=ko dir=ltr class=scroll-smooth data-default-appearance=light data-auto-appearance=true><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=theme-color content="#FFFFFF"><title>멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안 &#183; Jimmy's Notebook</title><meta name=title content="멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안 &#183; Jimmy's Notebook"><script type=text/javascript src=https://jmj4.github.io/blog/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="></script><link type=text/css rel=stylesheet href=https://jmj4.github.io/blog/css/main.bundle.min.d5b7131c4674ce17bee12e194aa9c963121dbde7a7a52b9ca6d1fd31960b940e.css integrity="sha256-1bcTHEZ0zhe+4S4ZSqnJYxIdveenpSucptH9MZYLlA4="><script defer type=text/javascript id=script-bundle src=https://jmj4.github.io/blog/js/main.bundle.min.3e80d0528c59616e7de9b0ca9316d9afd314b49ed9e5e6b88873731486ad67ee.js integrity="sha256-PoDQUoxZYW596bDKkxbZr9MUtJ7Z5ea4iHNzFIatZ+4=" data-copy=복사 data-copied=복사됨></script><meta name=description content="
+
+
+
+
+
+
+
+<!doctype html>
+<html
+  lang="ko"
+  dir="ltr"
+  class="scroll-smooth"
+  data-default-appearance="light"
+  data-auto-appearance="true"
+><head><script src="/blog/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=blog/livereload" data-no-instant defer></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FFFFFF" />
+  
+  <title>멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안 &middot; Jimmy&#39;s Notebook</title>
+    <meta name="title" content="멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안 &middot; Jimmy&#39;s Notebook" />
+  
+  
+  
+  
+  
+  <script
+    type="text/javascript"
+    src="http://localhost:1313/blog/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js"
+    integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="
+  ></script>
+  
+  
+  
+  
+  
+  
+  
+  
+  <link
+    type="text/css"
+    rel="stylesheet"
+    href="http://localhost:1313/blog/css/main.bundle.min.d5b7131c4674ce17bee12e194aa9c963121dbde7a7a52b9ca6d1fd31960b940e.css"
+    integrity="sha256-1bcTHEZ0zhe&#43;4S4ZSqnJYxIdveenpSucptH9MZYLlA4="
+  />
+  
+  
+  
+    
+    
+  
+  
+  
+  
+    
+    <script
+      defer
+      type="text/javascript"
+      id="script-bundle"
+      src="http://localhost:1313/blog/js/main.bundle.min.3e80d0528c59616e7de9b0ca9316d9afd314b49ed9e5e6b88873731486ad67ee.js"
+      integrity="sha256-PoDQUoxZYW596bDKkxbZr9MUtJ7Z5ea4iHNzFIatZ&#43;4="
+      data-copy="복사"
+      data-copied="복사됨"
+    ></script>
+  
+  
+  <meta
+    name="description"
+    content="
       
         
       
-    "><link rel=canonical href=https://jmj4.github.io/blog/posts/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88/><link rel=apple-touch-icon sizes=180x180 href=https://jmj4.github.io/blog/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=https://jmj4.github.io/blog/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=https://jmj4.github.io/blog/favicon-16x16.png><link rel=manifest href=https://jmj4.github.io/blog/site.webmanifest><meta property="og:url" content="https://jmj4.github.io/blog/posts/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88/"><meta property="og:site_name" content="Jimmy's Notebook"><meta property="og:title" content="멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안"><meta property="og:locale" content="ko"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2025-10-01T19:20:00+09:00"><meta property="article:modified_time" content="2025-10-01T19:20:00+09:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안"><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","articleSection":"Posts","name":"멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안","headline":"멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안","inLanguage":"ko","url":"https:\/\/jmj4.github.io\/blog\/posts\/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88\/","author":{"@type":"Person","name":"Jinmyung Jeong"},"copyrightYear":"2025","dateCreated":"2025-10-01T19:20:00\u002b09:00","datePublished":"2025-10-01T19:20:00\u002b09:00","dateModified":"2025-10-01T19:20:00\u002b09:00","mainEntityOfPage":"true","wordCount":"558"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://jmj4.github.io/blog/","name":"Jimmy's Notebook","position":1},{"@type":"ListItem","item":"https://jmj4.github.io/blog/posts/","name":"Posts","position":2},{"@type":"ListItem","name":"멀티스레딩과 멀티프로세싱 대규모 Dicom 파일 마스킹 방안","position":3}]}</script><meta name=author content="Jinmyung Jeong"><link href=https://github.com/jmj4 rel=me><link href=https://www.linkedin.com/in/jinmyung-jeong-031a38376/ rel=me></head><body class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"><div id=the-top class="absolute flex self-center"><a class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600" href=#main-content><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span>메인 콘텐츠로 이동하기</a></div><header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden"><nav class="flex items-start justify-between sm:items-center"><div class="flex flex-row items-center"><a class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2" rel=me href=https://jmj4.github.io/blog/>Jimmy&rsquo;s Notebook</a></div><ul class="flex list-none flex-col text-end sm:flex-row"><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0.5"><a href=https://jmj4.github.io/blog/posts/ title=Posts><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">Blog</span></a></li><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0.5"><a href=https://jmj4.github.io/blog/topics/ title=Topics><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">Topics</span></a></li><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0.5"><a href=https://github.com/jmj4 title target=_blank><span class="group-dark:hover:text-primary-400 transition-colors group-hover:text-primary-600"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6.0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6.0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3.0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1.0-6.2-.3-40.4-.3-61.4.0.0-70 15-84.7-29.8.0.0-11.4-29.1-27.8-36.6.0.0-22.9-15.7 1.6-15.4.0.0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5.0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9.0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4.0 33.7-.3 75.4-.3 83.6.0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6.0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9.0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span></span></a></li><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0.5"></li></ul></nav></header><div class="relative flex grow flex-col"><main id=main-content class=grow><article><header class=max-w-prose><h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안</h1><div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden"><div class="flex flex-row flex-wrap items-center"><time datetime="2025-10-01 19:20:00 +0900 KST">2025년 10월 1일</time><span class="px-2 text-primary-500">&#183;</span><span>558 자</span><span class="px-2 text-primary-500">&#183;</span><span title="읽는 데 걸리는 시간">3 분</span></div><div class="my-1 flex flex-wrap text-xs leading-relaxed text-neutral-500 dark:text-neutral-400"><a href=https://jmj4.github.io/blog/topics/programming/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Programming</a></div></div></header><section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row"><div class="order-first px-0 lg:order-last lg:max-w-xs lg:ps-8"><div class="toc pe-5 lg:sticky lg:top-10 print:hidden"><details open class="-ms-5 mt-0 overflow-hidden rounded-lg ps-5"><summary class="block cursor-pointer bg-neutral-100 py-1 ps-5 text-lg font-semibold text-neutral-800 dark:bg-neutral-700 dark:text-neutral-100 lg:hidden">목차</summary><div class="border-s border-dotted border-neutral-300 py-2 ps-5 dark:border-neutral-600"><nav id=TableOfContents><ul><li><a href=#1-상황-설명>1. 상황 설명</a></li><li><a href=#2-문제-정의>2. 문제 정의</a><ul><li><a href=#2-1-스토리지에서-dicom-파일-읽기>2-1. 스토리지에서 DICOM 파일 읽기</a></li><li><a href=#2-2-dicom-파일-마스킹하기>2-2. DICOM 파일 마스킹하기</a></li><li><a href=#2-3-작업-배치-처리하기>2-3. 작업 배치 처리하기</a></li></ul></li><li><a href=#3-결과-및-한계점>3. 결과 및 한계점</a></li></ul></nav></div></details></div></div><div class="min-h-0 min-w-0 max-w-prose grow"><p>의료 영상 데이터는 주로 DICOM 파일 형태로 저장되는데요,<br>이때 수검자 메타데이터가 이미지 상에 함께 나타납니다.</p><p>이를 연구 목적으로 외부로 반출하기 위해서는 이미지 상에 나타나는 개인 정보의 마스킹이 필수적인데요, 이 과정에서 대용량의 데이터를 효율적으로 처리하기 위해 병렬 처리를 고민했습니다.</p><p>이번 글에서는 그 과정을 공유하고자 합니다.</p><hr><figure class="mx-auto my-0 rounded-md"><picture class="mx-auto my-0 rounded-md"><source srcset=https://jmj4.github.io/blog/posts/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88/images/dicom_example_hu_23a85dde9f74ebce.webp sizes=100vw type=image/webp><img width=600 height=450 class="mx-auto my-0 rounded-md" alt="Brain MRI DICOM 예시 이미지" loading=lazy decoding=async src=https://jmj4.github.io/blog/posts/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88/images/dicom_example.png></picture><figcaption class=text-center>Brain MRI DICOM 파일 예시 <a href=https://www.magnetomworld.siemens-healthineers.com/korean-dicom-image-gallery target=_blank>[출처]</a></figcaption></figure><h2 id=1-상황-설명 class="relative group">1. 상황 설명 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style=text-decoration-line:none!important href=#1-%ec%83%81%ed%99%a9-%ec%84%a4%eb%aa%85 aria-label=앵커>#</a></span></h2><p>MRI 데이터는 상단 예시와 같이 주로 DICOM 파일 형태로 저장됩니다.<br>이때 환자 당 보통 백 장 내외의 사진을 촬영하기 때문에 기간에 따라 대략 <strong>수백만 건</strong>의 파일을 마스킹해야 하는 상황이 발생합니다.</p><hr><h2 id=2-문제-정의 class="relative group">2. 문제 정의 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style=text-decoration-line:none!important href=#2-%eb%ac%b8%ec%a0%9c-%ec%a0%95%ec%9d%98 aria-label=앵커>#</a></span></h2><p>해당 작업은 서버에서 파일을 읽는 <strong>I/O Bound</strong> 작업과<br>파일을 마스킹하는 <strong>CPU Bound</strong> 작업이 혼합되어 있다고 판단했습니다.</p><p>따라서 ThreadPool을 사용하여 파일을 읽어온 후, 그 결과를 ProcessPool을 사용하여 각 CPU가 마스킹을 수행하는 프로세스를 계획했습니다.</p><h3 id=2-1-스토리지에서-dicom-파일-읽기 class="relative group">2-1. 스토리지에서 DICOM 파일 읽기 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style=text-decoration-line:none!important href=#2-1-%ec%8a%a4%ed%86%a0%eb%a6%ac%ec%a7%80%ec%97%90%ec%84%9c-dicom-%ed%8c%8c%ec%9d%bc-%ec%9d%bd%ea%b8%b0 aria-label=앵커>#</a></span></h3><p>MRI 데이터는 PACS 서버에 저장되어 있었기 때문에 데이터를 불러올 때마다 서버에 접근해야 했습니다.<br>이때 필연적으로 응답 대기 시간이 발생했는데요,<br>읽어올 파일 수가 많을 경우 이러한 대기 시간이 병목으로 작용했습니다.</p><p>이를 해결하기 위해 먼저 <strong>멀티스레딩</strong>을 떠올렸습니다.<br>여러 개의 스레드가 동시에 요청을 보내면, 어떤 스레드가 네트워크 응답을 기다리는 동안 다른 스레드가 다시 새로운 파일을 읽어올 것이므로 응답 대기 시간을 상쇄할 수 있을 것이라고 생각했습니다.<br>즉, <strong>동시에 여러 파일을 읽는</strong> 데 효과적일 것이라고 판단했습니다.</p><h3 id=2-2-dicom-파일-마스킹하기 class="relative group">2-2. DICOM 파일 마스킹하기 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style=text-decoration-line:none!important href=#2-2-dicom-%ed%8c%8c%ec%9d%bc-%eb%a7%88%ec%8a%a4%ed%82%b9%ed%95%98%ea%b8%b0 aria-label=앵커>#</a></span></h3><p>문제는 멀티스레딩으로 파일을 읽어온 다음이었습니다.<br>저는 파이썬의 pydicom 라이브러리를 활용하여 마스킹 작업을 수행했는데요,<br>파이썬에서는 <strong>GIL(Global Interperter Lock)</strong> 때문에 마스킹과 같은 CPU Bound 작업은 멀티스레딩이 큰 효과를 보지 못합니다.</p><p>여기서 GIL이란 파이썬에서 한 번에 하나의 스레드만 실행하도록 하는 일종의 안전장치인데요,<br>위와 같이 서버에서 파일을 읽거나, HTTP 요청을 보내는 등 I/O 대기 중에는 GIL이 풀리기 때문에 스레딩 효과를 볼 수 있었죠.<br>하지만 CPU 연산 같은 경우에는 GIL이 걸리기 때문에 스레드 기반 병렬화가 효과가 없습니다.<br>따라서 아예 프로세스를 늘리는 <strong>멀티프로세싱</strong>이 필요했습니다.<br>이를 통해 <strong>읽어온 파일들을 여러 프로세스에 분배</strong>하여 작업 속도를 개선할 수 있을 것이라 판단했습니다.</p><h3 id=2-3-작업-배치-처리하기 class="relative group">2-3. 작업 배치 처리하기 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style=text-decoration-line:none!important href=#2-3-%ec%9e%91%ec%97%85-%eb%b0%b0%ec%b9%98-%ec%b2%98%eb%a6%ac%ed%95%98%ea%b8%b0 aria-label=앵커>#</a></span></h3><p>또 한가지 문제는 처리할 파일 수가 매우 많다는 것이었습니다.<br>수백만 건의 파일을 처리하고 있는데, 이러한 작업들을 전부 큐에 쌓아두게 된다면 메모리를 GB 단위로 차지하게 되겠죠.<br>따라서 OOM 에러를 방지하기 위해 모든 파일을 한번에 제출하는 것이 아닌, 작업을 <strong>배치 단위로 나눠서 제출</strong>하도록 했습니다.</p><hr><h2 id=3-결과-및-한계점 class="relative group">3. 결과 및 한계점 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style=text-decoration-line:none!important href=#3-%ea%b2%b0%ea%b3%bc-%eb%b0%8f-%ed%95%9c%ea%b3%84%ec%a0%90 aria-label=앵커>#</a></span></h2><p>이번 대규모 DICOM 파일 마스킹 사례는 <strong>스레드 결과가 프로세스 결과에 전달</strong>되는 구조였습니다.<br>PACS 서버에서 데이터를 읽어오기 때문에 I/O Bound의 특성이 있었고, 읽어온 파일을 마스킹하는 과정에서 CPU Bound의 특성이 있었기에, 멀티스레딩 그리고 멀티프로세싱 두 방식의 차이 및 적용 방안을 고려하는 계기가 되었습니다.</p><p>나아가 대규모 파일을 처리하기 위해 배치 단위로 작업을 나누고, 메모리를 폭증시키지 않는 선에서 적절한 배치 사이즈를 찾기 위해 여러 테스트를 수행했습니다.</p><p>결과적으로, 이전 방식대로였다면 3개월 이상이 걸릴 작업량을 개발 포함 한달 이내에 완수할 수 있었습니다.</p><p>추가로, python3.13t 에서 GIL을 비활성화하는 옵션이 <em>실험적으로</em> 제공된다고 합니다.<br>아직까지는 싱글 스레드에서 성능 하락이 있는 등 한계가 있는 것 같습니다만,<br>만약 이번 사례에서 GIL이 없었다면 멀티프로세싱 부분을 스레드 기반으로 단순화할 수 있었겠네요.<br>또한, 프로세스를 생성 및 종료하는 비용도 줄였을 테고요.</p><p>몇 가지 한계도 존재하는데요,</p><ul><li><strong>대역폭에 한계가 있어요</strong><br>PACS 서버의 대역폭 한계가 존재하기 때문에 멀티스레딩의 효과가 적을 수 있습니다.</li><li><strong>프로세스 간 메모리 복제 비용이 발생해요</strong><br>멀티프로세싱은 각 프로세스가 독립적인 메모리를 사용합니다. 문제는 DICOM 객체를 각 프로세스에 뿌려야 하는데, 이때 직렬화/역직렬화 비용이 발생한다는 것입니다. 파일의 수가 많고 고해상도일수록 이러한 오버헤드는 커질 것입니다.</li><li><strong>리소스 관리가 어려워요</strong><br>메모리가 제한된 환경에서 최적의 배치사이즈나 스레드 수, 프로세스 수를 구하기가 어려웠습니다.</li><li><strong>디버깅이 복잡해요</strong><br>스레드 내부에서 발생한 에러를 바로 확인하기 어려웠습니다. 프로그램이 읽지 못한 파일이 하나 있었는데, 그 원인을 로그를 통해 수동으로 추적해야 했습니다. 로직이 더욱 복잡해지면 디버깅도 더 어려워지겠죠. 향후에는 멀티스레딩 및 멀티프로세싱을 적용할 때 에러를 추적할 방안을 고민해야겠습니다.</li></ul></div></section><footer class="max-w-prose pt-8 print:hidden"></footer></article></main><div class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12" id=to-top hidden=true><a href=#the-top class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400" aria-label="위로 스크롤" title="위로 스크롤">&uarr;</a></div><footer class="py-10 print:hidden"><div class="flex items-center justify-between"><div><p class="text-sm text-neutral-500 dark:text-neutral-400">&copy;
-2025
-Jinmyung Jeong</p><p class="text-xs text-neutral-500 dark:text-neutral-400">Powered by <a class="hover:underline hover:decoration-primary-400 hover:text-primary-500" href=https://gohugo.io/ target=_blank rel="noopener noreferrer">Hugo</a> & <a class="hover:underline hover:decoration-primary-400 hover:text-primary-500" href=https://github.com/jpanther/congo target=_blank rel="noopener noreferrer">Congo</a></p></div><div class="flex flex-row items-center"></div></div></footer></div></body></html>
+    "
+  />
+  
+  
+  
+  
+    <link rel="canonical" href="http://localhost:1313/blog/posts/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88/" />
+  
+  
+  
+    <link rel="apple-touch-icon" sizes="180x180" href="http://localhost:1313/blog/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/blog/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/blog/favicon-16x16.png" />
+    <link rel="manifest" href="http://localhost:1313/blog/site.webmanifest" />
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta property="og:url" content="http://localhost:1313/blog/posts/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88/">
+  <meta property="og:site_name" content="Jimmy&#39;s Notebook">
+  <meta property="og:title" content="멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안">
+  <meta property="og:locale" content="ko">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-10-01T19:20:00+09:00">
+    <meta property="article:modified_time" content="2025-10-01T19:20:00+09:00">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "articleSection": "Posts",
+    "name": "멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안",
+    "headline": "멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안",
+    
+    
+    "inLanguage": "ko",
+    "url" : "http:\/\/localhost:1313\/blog\/posts\/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88\/",
+    "author" : {
+      "@type": "Person",
+      "name": "Jinmyung Jeong"
+    },
+    "copyrightYear": "2025",
+    "dateCreated": "2025-10-01T19:20:00\u002b09:00",
+    "datePublished": "2025-10-01T19:20:00\u002b09:00",
+    
+    "dateModified": "2025-10-01T19:20:00\u002b09:00",
+    
+    
+    
+    "mainEntityOfPage": "true",
+    "wordCount": "558"
+  }
+  </script>
+    
+    <script type="application/ld+json">
+    {
+   "@context": "https://schema.org",
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+     {
+       "@type": "ListItem",
+       "item": "http://localhost:1313/blog/",
+       "name": "Jimmy's Notebook",
+       "position": 1
+     },
+     {
+       "@type": "ListItem",
+       "item": "http://localhost:1313/blog/posts/",
+       "name": "Posts",
+       "position": 2
+     },
+     {
+       "@type": "ListItem",
+       "name": "멀티스레딩과 멀티프로세싱 대규모 Dicom 파일 마스킹 방안",
+       "position": 3
+     }
+   ]
+ }
+  </script>
+
+  
+  
+    <meta name="author" content="Jinmyung Jeong" />
+  
+  
+    
+      <link href="https://github.com/jmj4" rel="me" />
+    
+      <link href="https://www.linkedin.com/in/jinmyung-jeong-031a38376/" rel="me" />
+    
+  
+  
+  
+
+
+
+
+
+
+
+  
+  
+
+  
+  
+</head>
+<body
+    class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"
+  >
+    <div id="the-top" class="absolute flex self-center">
+      <a
+        class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600"
+        href="#main-content"
+        ><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span
+        >메인 콘텐츠로 이동하기</a
+      >
+    </div>
+    
+    
+      <header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden">
+  <nav class="flex items-start justify-between sm:items-center">
+    
+    <div class="flex flex-row items-center">
+      
+  <a
+    class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2"
+    rel="me"
+    href="http://localhost:1313/blog/"
+    >Jimmy&rsquo;s Notebook</a
+  >
+
+    </div>
+    
+    
+      <ul class="flex list-none flex-col text-end sm:flex-row">
+        
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0.5">
+              
+                <a
+                  href="http://localhost:1313/blog/posts/"
+                  title="Posts"
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >Blog</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0.5">
+              
+                <a
+                  href="http://localhost:1313/blog/topics/"
+                  title="Topics"
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >Topics</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0.5">
+              
+                <a
+                  href="https://github.com/jmj4"
+                  title=""
+                  target="_blank"
+                  >
+                    <span
+                      class="group-dark:hover:text-primary-400 transition-colors group-hover:text-primary-600"
+                    ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+</span></span></a
+                >
+              
+            </li>
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0.5">
+              
+                
+                
+              
+            </li>
+          
+            
+              
+          
+        
+      </ul>
+    
+  </nav>
+</header>
+
+    
+    <div class="relative flex grow flex-col">
+      <main id="main-content" class="grow">
+        
+  <article>
+    <header class="max-w-prose">
+      
+      <h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">
+        멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안
+      </h1>
+      
+        <div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden">
+          
+
+
+
+
+
+  
+  
+
+
+
+  
+
+  
+  
+    
+  
+
+  
+
+  
+    
+  
+
+  
+    
+  
+
+  
+
+
+  <div class="flex flex-row flex-wrap items-center">
+    
+    
+      <time datetime="2025-10-01 19:20:00 &#43;0900 KST">2025년 10월 1일</time><span class="px-2 text-primary-500">&middot;</span><span>558 자</span><span class="px-2 text-primary-500">&middot;</span><span title="읽는 데 걸리는 시간">3 분</span>
+    
+
+    
+    
+  </div>
+
+  
+  
+    <div class="my-1 flex flex-wrap text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+      
+        
+          
+            <a
+              href="http://localhost:1313/blog/topics/programming/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Programming</a
+            >
+          
+        
+      
+    </div>
+  
+
+
+        </div>
+      
+      
+    </header>
+    <section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row">
+      
+        <div class="order-first px-0 lg:order-last lg:max-w-xs lg:ps-8">
+          <div class="toc pe-5 lg:sticky lg:top-10 print:hidden">
+            <details open class="-ms-5 mt-0 overflow-hidden rounded-lg ps-5">
+  <summary
+    class="block cursor-pointer bg-neutral-100 py-1 ps-5 text-lg font-semibold text-neutral-800 dark:bg-neutral-700 dark:text-neutral-100 lg:hidden"
+  >
+    목차
+  </summary>
+  <div class="border-s border-dotted border-neutral-300 py-2 ps-5 dark:border-neutral-600">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#1-상황-설명">1. 상황 설명</a></li>
+    <li><a href="#2-문제-정의">2. 문제 정의</a>
+      <ul>
+        <li><a href="#2-1-스토리지에서-dicom-파일-읽기">2-1. 스토리지에서 DICOM 파일 읽기</a></li>
+        <li><a href="#2-2-dicom-파일-마스킹하기">2-2. DICOM 파일 마스킹하기</a></li>
+        <li><a href="#2-3-작업-배치-처리하기">2-3. 작업 배치 처리하기</a></li>
+      </ul>
+    </li>
+    <li><a href="#3-결과-및-한계점">3. 결과 및 한계점</a></li>
+  </ul>
+</nav>
+  </div>
+</details>
+
+          </div>
+        </div>
+      
+      <div class="min-h-0 min-w-0 max-w-prose grow">
+        <p>의료 영상 데이터는 주로 DICOM 파일 형태로 저장되는데요,<br>
+이때 수검자 메타데이터가 이미지 상에 함께 나타납니다.</p>
+<p>이를 연구 목적으로 외부로 반출하기 위해서는 이미지 상에 나타나는 개인 정보의 마스킹이 필수적인데요, 이 과정에서 대용량의 데이터를 효율적으로 처리하기 위해 병렬 처리를 고민했습니다.</p>
+<p>이번 글에서는 그 과정을 공유하고자 합니다.</p>
+<hr>
+
+  
+  
+  
+  
+  
+
+  
+  
+  <figure class="mx-auto my-0 rounded-md">
+    
+      
+      
+
+
+
+
+
+
+
+
+  
+    <picture
+      class="mx-auto my-0 rounded-md"
+      
+    >
+      
+      
+      
+      
+        <source
+          
+            
+              srcset="http://localhost:1313/blog/posts/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88/images/dicom_example_hu_23a85dde9f74ebce.webp"
+            
+          
+          sizes="100vw"
+          type="image/webp"
+        />
+      
+      <img
+        width="600"
+        height="450"
+        class="mx-auto my-0 rounded-md"
+        alt="Brain MRI DICOM 예시 이미지"
+        loading="lazy" decoding="async"
+        
+          src="http://localhost:1313/blog/posts/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88/images/dicom_example.png"
+        
+      />
+    </picture>
+  
+
+
+    <figcaption class="text-center">Brain MRI DICOM 파일 예시 <a href='https://www.magnetomworld.siemens-healthineers.com/korean-dicom-image-gallery' target='_blank'>[출처]</a></figcaption>
+  </figure>
+
+
+<h2 id="1-상황-설명" class="relative group">1. 상황 설명 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#1-%ec%83%81%ed%99%a9-%ec%84%a4%eb%aa%85" aria-label="앵커">#</a></span></h2><p>MRI 데이터는 상단 예시와 같이 주로 DICOM 파일 형태로 저장됩니다.<br>
+이때 환자 당 보통 백 장 내외의 사진을 촬영하기 때문에 기간에 따라 대략 <strong>수백만 건</strong>의 파일을 마스킹해야 하는 상황이 발생합니다.</p>
+<hr>
+<h2 id="2-문제-정의" class="relative group">2. 문제 정의 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#2-%eb%ac%b8%ec%a0%9c-%ec%a0%95%ec%9d%98" aria-label="앵커">#</a></span></h2><p>해당 작업은 서버에서 파일을 읽는 <strong>I/O Bound</strong> 작업과<br>
+파일을 마스킹하는 <strong>CPU Bound</strong> 작업이 혼합되어 있다고 판단했습니다.</p>
+<p>따라서 ThreadPool을 사용하여 파일을 읽어온 후, 그 결과를 ProcessPool을 사용하여 각 CPU가 마스킹을 수행하는 프로세스를 계획했습니다.</p>
+<h3 id="2-1-스토리지에서-dicom-파일-읽기" class="relative group">2-1. 스토리지에서 DICOM 파일 읽기 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#2-1-%ec%8a%a4%ed%86%a0%eb%a6%ac%ec%a7%80%ec%97%90%ec%84%9c-dicom-%ed%8c%8c%ec%9d%bc-%ec%9d%bd%ea%b8%b0" aria-label="앵커">#</a></span></h3><p>MRI 데이터는 PACS 서버에 저장되어 있었기 때문에 데이터를 불러올 때마다 서버에 접근해야 했습니다.<br>
+이때 필연적으로 응답 대기 시간이 발생했는데요,<br>
+읽어올 파일 수가 많을 경우 이러한 대기 시간이 병목으로 작용했습니다.</p>
+<p>이를 해결하기 위해 먼저 <strong>멀티스레딩</strong>을 떠올렸습니다.<br>
+여러 개의 스레드가 동시에 요청을 보내면, 어떤 스레드가 네트워크 응답을 기다리는 동안 다른 스레드가 다시 새로운 파일을 읽어올 것이므로 응답 대기 시간을 상쇄할 수 있을 것이라고 생각했습니다.<br>
+즉, <strong>동시에 여러 파일을 읽는</strong> 데 효과적일 것이라고 판단했습니다.</p>
+<h3 id="2-2-dicom-파일-마스킹하기" class="relative group">2-2. DICOM 파일 마스킹하기 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#2-2-dicom-%ed%8c%8c%ec%9d%bc-%eb%a7%88%ec%8a%a4%ed%82%b9%ed%95%98%ea%b8%b0" aria-label="앵커">#</a></span></h3><p>문제는 멀티스레딩으로 파일을 읽어온 다음이었습니다.<br>
+저는 파이썬의 pydicom 라이브러리를 활용하여 마스킹 작업을 수행했는데요,<br>
+파이썬에서는 <strong>GIL(Global Interperter Lock)</strong> 때문에 마스킹과 같은 CPU Bound 작업은 멀티스레딩이 큰 효과를 보지 못합니다.</p>
+<p>여기서 GIL이란 파이썬에서 한 번에 하나의 스레드만 실행하도록 하는 일종의 안전장치인데요,<br>
+위와 같이 서버에서 파일을 읽거나, HTTP 요청을 보내는 등 I/O 대기 중에는 GIL이 풀리기 때문에 스레딩 효과를 볼 수 있었죠.<br>
+하지만 CPU 연산 같은 경우에는 GIL이 걸리기 때문에 스레드 기반 병렬화가 효과가 없습니다.<br>
+따라서 아예 프로세스를 늘리는 <strong>멀티프로세싱</strong>이 필요했습니다.<br>
+이를 통해 <strong>읽어온 파일들을 여러 프로세스에 분배</strong>하여 작업 속도를 개선할 수 있을 것이라 판단했습니다.</p>
+<h3 id="2-3-작업-배치-처리하기" class="relative group">2-3. 작업 배치 처리하기 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#2-3-%ec%9e%91%ec%97%85-%eb%b0%b0%ec%b9%98-%ec%b2%98%eb%a6%ac%ed%95%98%ea%b8%b0" aria-label="앵커">#</a></span></h3><p>또 한가지 문제는 처리할 파일 수가 매우 많다는 것이었습니다.<br>
+수백만 건의 파일을 처리하고 있는데, 이러한 작업들을 전부 큐에 쌓아두게 된다면 메모리를 GB 단위로 차지하게 되겠죠.<br>
+따라서 OOM 에러를 방지하기 위해 모든 파일을 한번에 제출하는 것이 아닌, 작업을 <strong>배치 단위로 나눠서 제출</strong>하도록 했습니다.</p>
+<hr>
+<h2 id="3-결과-및-한계점" class="relative group">3. 결과 및 한계점 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#3-%ea%b2%b0%ea%b3%bc-%eb%b0%8f-%ed%95%9c%ea%b3%84%ec%a0%90" aria-label="앵커">#</a></span></h2><p>이번 대규모 DICOM 파일 마스킹 사례는 <strong>스레드 결과가 프로세스 결과에 전달</strong>되는 구조였습니다.<br>
+PACS 서버에서 데이터를 읽어오기 때문에 I/O Bound의 특성이 있었고, 읽어온 파일을 마스킹하는 과정에서 CPU Bound의 특성이 있었기에, 멀티스레딩 그리고 멀티프로세싱 두 방식의 차이 및 적용 방안을 고려하는 계기가 되었습니다.</p>
+<p>나아가 대규모 파일을 처리하기 위해 배치 단위로 작업을 나누고, 메모리를 폭증시키지 않는 선에서 적절한 배치 사이즈를 찾기 위해 여러 테스트를 수행했습니다.</p>
+<p>결과적으로, 이전 방식대로였다면 3개월 이상이 걸릴 작업량을 개발 포함 한달 이내에 완수할 수 있었습니다.</p>
+<p>추가로, python3.13t 에서 GIL을 비활성화하는 옵션이 <em>실험적으로</em> 제공된다고 합니다.<br>
+아직까지는 싱글 스레드에서 성능 하락이 있는 등 한계가 있는 것 같습니다만,<br>
+만약 이번 사례에서 GIL이 없었다면 멀티프로세싱 부분을 스레드 기반으로 단순화할 수 있었겠네요.<br>
+또한, 프로세스를 생성 및 종료하는 비용도 줄였을 테고요.</p>
+<p>몇 가지 한계도 존재하는데요,</p>
+<ul>
+<li><strong>대역폭에 한계가 있어요</strong><br>
+PACS 서버의 대역폭 한계가 존재하기 때문에 멀티스레딩의 효과가 적을 수 있습니다.</li>
+<li><strong>프로세스 간 메모리 복제 비용이 발생해요</strong><br>
+멀티프로세싱은 각 프로세스가 독립적인 메모리를 사용합니다. 문제는 DICOM 객체를 각 프로세스에 뿌려야 하는데, 이때 직렬화/역직렬화 비용이 발생한다는 것입니다. 파일의 수가 많고 고해상도일수록 이러한 오버헤드는 커질 것입니다.</li>
+<li><strong>리소스 관리가 어려워요</strong><br>
+메모리가 제한된 환경에서 최적의 배치사이즈나 스레드 수, 프로세스 수를 구하기가 어려웠습니다.</li>
+<li><strong>디버깅이 복잡해요</strong><br>
+스레드 내부에서 발생한 에러를 바로 확인하기 어려웠습니다. 프로그램이 읽지 못한 파일이 하나 있었는데, 그 원인을 로그를 통해 수동으로 추적해야 했습니다. 로직이 더욱 복잡해지면 디버깅도 더 어려워지겠죠. 향후에는 멀티스레딩 및 멀티프로세싱을 적용할 때 에러를 추적할 방안을 고민해야겠습니다.</li>
+</ul>
+
+      </div>
+    </section>
+    <footer class="max-w-prose pt-8 print:hidden">
+      
+
+      
+
+      
+  
+
+
+      
+    </footer>
+  </article>
+
+      </main>
+      
+        <div
+          class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12"
+          id="to-top"
+          hidden="true"
+        >
+          <a
+            href="#the-top"
+            class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400"
+            aria-label="위로 스크롤"
+            title="위로 스크롤"
+          >
+            &uarr;
+          </a>
+        </div>
+      <footer class="py-10 print:hidden">
+  
+  
+  <div class="flex items-center justify-between">
+    <div>
+      
+      
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">
+            &copy;
+            2025
+            Jinmyung Jeong
+        </p>
+      
+      
+      
+        <p class="text-xs text-neutral-500 dark:text-neutral-400">
+          
+          
+          Powered by <a class="hover:underline hover:decoration-primary-400 hover:text-primary-500"
+            href="https://gohugo.io/" target="_blank" rel="noopener noreferrer">Hugo</a> &amp; <a class="hover:underline hover:decoration-primary-400 hover:text-primary-500" href="https://github.com/jpanther/congo" target="_blank" rel="noopener noreferrer">Congo</a>
+        </p>
+      
+    </div>
+    <div class="flex flex-row items-center">
+      
+      
+      
+      
+    </div>
+  </div>
+  
+  
+</footer>
+
+    </div>
+  </body>
+</html>
