@@ -4,7 +4,7 @@
   
     
       <url>
-            <loc>http://localhost:1313/blog/</loc>
+            <loc>https://jmj4.github.io:1313/blog/</loc>
             <lastmod>2025-12-20T17:24:37+09:00</lastmod>
           </url>
     
@@ -13,7 +13,7 @@
   
     
       <url>
-            <loc>http://localhost:1313/blog/posts/</loc>
+            <loc>https://jmj4.github.io:1313/blog/posts/</loc>
             <lastmod>2025-12-20T17:24:37+09:00</lastmod>
           </url>
     
@@ -22,7 +22,7 @@
   
     
       <url>
-            <loc>http://localhost:1313/blog/posts/post2/</loc>
+            <loc>https://jmj4.github.io:1313/blog/posts/post2/</loc>
             <lastmod>2025-12-20T17:24:37+09:00</lastmod>
           </url>
     
@@ -31,7 +31,7 @@
   
     
       <url>
-            <loc>http://localhost:1313/blog/posts/post1/</loc>
+            <loc>https://jmj4.github.io:1313/blog/posts/post1/</loc>
             <lastmod>2025-10-01T19:20:00+09:00</lastmod>
           </url>
     
