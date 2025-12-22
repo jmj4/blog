@@ -2,17 +2,24 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Jimmy&#39;s Notebook</title>
-    <link>https://jmj4.github.io/blog/</link>
+    <link>http://localhost:1313/blog/</link>
     <description>Recent content on Jimmy&#39;s Notebook</description>
     <generator>Hugo</generator>
     <language>ko</language>
-    <lastBuildDate>Wed, 01 Oct 2025 19:20:00 +0900</lastBuildDate>
-    <atom:link href="https://jmj4.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 20 Dec 2025 17:24:37 +0900</lastBuildDate>
+    <atom:link href="http://localhost:1313/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>의정사태에 나타난 언론보도 경향 탐색</title>
+      <link>http://localhost:1313/blog/posts/post2/</link>
+      <pubDate>Sat, 20 Dec 2025 17:24:37 +0900</pubDate>
+      <guid>http://localhost:1313/blog/posts/post2/</guid>
+      <description></description>
+    </item>
     <item>
       <title>멀티스레딩과 멀티프로세싱: 대규모 DICOM 파일 마스킹 방안</title>
-      <link>https://jmj4.github.io/blog/posts/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88/</link>
+      <link>http://localhost:1313/blog/posts/post1/</link>
       <pubDate>Wed, 01 Oct 2025 19:20:00 +0900</pubDate>
-      <guid>https://jmj4.github.io/blog/posts/dicom-%ED%8C%8C%EC%9D%BC-%EB%A7%88%EC%8A%A4%ED%82%B9-%EB%B0%A9%EC%95%88/</guid>
+      <guid>http://localhost:1313/blog/posts/post1/</guid>
       <description></description>
     </item>
   </channel>

@@ -16,7 +16,7 @@ layout = "contact"
 ---
 
 {{< figure
-  src="/images/dicom_example.png"
+  src="dicom_example.png"
   alt="Brain MRI DICOM 예시 이미지"
   caption="Brain MRI DICOM 파일 예시 <a href='https://www.magnetomworld.siemens-healthineers.com/korean-dicom-image-gallery' target='_blank'>[출처]</a>"
   loading="lazy"
