@@ -15,7 +15,7 @@ title = "Jimmy's Notebook"
 [params.author]
   name = "Jinmyung Jeong"
   image = "author_avatar.jpg"
-  headline = "ML ∪ Healthcare"
+  headline = "데이터로 보는 세상"
   bio = ""
   links = [
   #   { email = "mailto:hello@your_domain.com" },
