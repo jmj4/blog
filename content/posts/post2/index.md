@@ -1,7 +1,7 @@
 +++
 date = '2025-12-20T17:24:37+09:00'
 draft = false
-title = '의정사태에 나타난 언론보도 경향 탐색'
+title = 'LLM으로 본 의정사태 언론보도 경향'
 topics = ["NLP"]
 layout = "contact"
 +++
